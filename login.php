@@ -1,159 +1,109 @@
+<?php
+session_start();
+require 'config.php';
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $email = trim($_POST["email"]);
+    $password = trim($_POST["password"]);
+
+    $stmt = $conn->prepare("SELECT id, password FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
+
+    if ($stmt->num_rows > 0) {
+        $stmt->bind_result($id, $hashed);
+        $stmt->fetch();
+
+        if (password_verify($password, $hashed)) {
+            $_SESSION["user_id"] = $id;
+            $_SESSION["email"] = $email;
+            header("Location: dashboard.php");
+            exit;
+        } else {
+            $error = "Invalid password.";
+        }
+    } else {
+        $error = "Email not found.";
+    }
+    $stmt->close();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Login</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-  <!-- Include bootstrap if template uses bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
-    /* custom style to match your screenshot */
-
     body {
-      background-color: #f5f7fa;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      height: 100vh;
-    }
-
-    .sidebar {
-      width: 250px;
-      background-color: #2d3a4b;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-    }
-
-    .sidebar .logo {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 40px;
-      text-align: center;
-    }
-
-    .sidebar nav a {
-      color: #ffffff;
-      text-decoration: none;
-      margin: 15px 0;
-      display: block;
-      padding: 10px;
-      border-radius: 5px;
-    }
-
-    .sidebar nav a:hover {
-      background-color: #1f2a38;
-    }
-
-    .main-content {
-      flex-grow: 1;
+      background-color: rgb(67, 91, 116);
+      font-family: "Segoe UI", sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
+      margin: 0;
     }
-
     .login-card {
-      background-color: #ffffff;
+      background: #fff;
       padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       width: 100%;
       max-width: 400px;
     }
-
     .login-card h2 {
-      margin-bottom: 30px;
-      color: #333333;
-      font-weight: 600;
       text-align: center;
-    }
-
-    .login-card .form-group {
-      margin-bottom: 20px;
-    }
-
-    .login-card label {
-      font-weight: 500;
-      color: #555555;
-    }
-
-    .login-card input[type="email"],
-    .login-card input[type="password"] {
-      width: 100%;
-      padding: 12px 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 16px;
+      margin-bottom: 30px;
       color: #333;
     }
-
-    .login-card input[type="submit"] {
-      width: 100%;
-      padding: 12px;
-      background-color: #1abc9c;
-      color: #ffffff;
-      border: none;
-      border-radius: 5px;
-      font-size: 18px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
+    .form-control {
+      padding: 10px;
+      font-size: 16px;
     }
-
-    .login-card input[type="submit"]:hover {
+    .btn-primary {
+      background-color: #1abc9c;
+      border: none;
+    }
+    .btn-primary:hover {
       background-color: #17a589;
     }
-
-    .login-card .links {
-      margin-top: 15px;
-      text-align: center;
-    }
-
-    .login-card .links a {
+    .text-center a {
       color: #1abc9c;
-      text-decoration: none;
-      margin: 0 5px;
     }
-
-    .login-card .links a:hover {
+    .text-center a:hover {
       text-decoration: underline;
     }
-
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-
-  <div class="sidebar">
-    <div class="logo">Your Logo</div>
-    <nav>
-      <a href="#">Dashboard</a>
-      <a href="#">Components</a>
-      <a href="#">Forms & Table</a>
-      <a href="#">Charts</a>
-      <!-- etc -->
-    </nav>
-  </div>
-
-  <div class="main-content">
-    <div class="login-card">
-      <h2>Login</h2>
-      <form method="POST" action="login.php">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" name="email" id="email" required placeholder="Enter email">
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" name="password" id="password" required placeholder="Enter password">
-        </div>
-        <input type="submit" value="Login">
-      </form>
-      <div class="links">
-        <a href="register.php">Signup</a> | <a href="#">Forgot Password?</a>
+  <div class="login-card">
+    <h2>Login</h2>
+    <?php if (!empty($error)): ?>
+      <div class="error"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+    <form method="POST">
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" name="email" class="form-control" required placeholder="Enter email">
       </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" class="form-control" required placeholder="Enter password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Login</button>
+    </form>
+    <div class="text-center mt-3">
+      Don’t have an account? <a href="register.php">Register here</a>
     </div>
   </div>
-
 </body>
 </html>
