@@ -1,8 +1,8 @@
 <?php
 $host = "localhost";
-$user = "root";   // default user sa XAMPP
-$pass = "";       // default password sa XAMPP (blank)
-$db   = "php_dashboard";  // <-- sakto nga database name gikan sa imong .sql
+$user = "root";
+$pass = "";
+$db   = "php_dashboard";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
